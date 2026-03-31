@@ -1,0 +1,16 @@
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\bin\Debug\net8.0-windows\NeuroDots.exe
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\bin\Debug\net8.0-windows\NeuroDots.deps.json
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\bin\Debug\net8.0-windows\NeuroDots.runtimeconfig.json
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\bin\Debug\net8.0-windows\NeuroDots.dll
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\bin\Debug\net8.0-windows\NeuroDots.pdb
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.Form1.resources
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.csproj.GenerateResource.cache
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.AssemblyInfoInputs.cache
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.AssemblyInfo.cs
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.csproj.CoreCompileInputs.cache
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.dll
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\refint\NeuroDots.dll
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.pdb
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\NeuroDots.genruntimeconfig.cache
+C:\Users\Jake\source\repos\NeuroDots\NeuroDots\obj\Debug\net8.0-windows\ref\NeuroDots.dll
