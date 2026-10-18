@@ -74,7 +74,7 @@ namespace NeuroCivilization.Core
             "Muscle", "Bone", "Lung", "NeuralPlast"
         };
 
-        static Random R = new();
+        static Random R => Random.Shared;
 
         public Genome()
         {

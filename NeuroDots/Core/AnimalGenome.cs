@@ -18,7 +18,7 @@ namespace NeuroCivilization.Core
         public double NocturnalActivity;
         public double ColorR, ColorG, ColorB;
 
-        static Random R = new();
+        private static Random R => Random.Shared;
 
         public AnimalGenome()
         {
@@ -47,31 +47,30 @@ namespace NeuroCivilization.Core
 
         public static AnimalGenome Cross(AnimalGenome a, AnimalGenome b)
         {
-            var c = new AnimalGenome
+            return new AnimalGenome
             {
                 Size = R.NextDouble() < 0.5 ? a.Size : b.Size,
-                Speed = (a.Speed + b.Speed) / 2 + (R.NextDouble() - 0.5) * 5,
-                VisionRange = (a.VisionRange + b.VisionRange) / 2,
+                Speed = (a.Speed + b.Speed) * 0.5 + (R.NextDouble() - 0.5) * 5,
+                VisionRange = (a.VisionRange + b.VisionRange) * 0.5,
                 Aggression = R.NextDouble() < 0.5 ? a.Aggression : b.Aggression,
-                AttackPower = (a.AttackPower + b.AttackPower) / 2,
-                Fear = (a.Fear + b.Fear) / 2,
+                AttackPower = (a.AttackPower + b.AttackPower) * 0.5,
+                Fear = (a.Fear + b.Fear) * 0.5,
                 EnergyDrain = R.NextDouble() < 0.5 ? a.EnergyDrain : b.EnergyDrain,
-                MaxEnergy = (a.MaxEnergy + b.MaxEnergy) / 2,
-                DefensePower = (a.DefensePower + b.DefensePower) / 2,
-                ThermoTolerance = (a.ThermoTolerance + b.ThermoTolerance) / 2,
+                MaxEnergy = (a.MaxEnergy + b.MaxEnergy) * 0.5,
+                DefensePower = (a.DefensePower + b.DefensePower) * 0.5,
+                ThermoTolerance = (a.ThermoTolerance + b.ThermoTolerance) * 0.5,
                 NocturnalActivity = R.NextDouble() < 0.5 ? a.NocturnalActivity : b.NocturnalActivity,
-                ColorR = (a.ColorR + b.ColorR) / 2,
-                ColorG = (a.ColorG + b.ColorG) / 2,
-                ColorB = (a.ColorB + b.ColorB) / 2
+                ColorR = (a.ColorR + b.ColorR) * 0.5,
+                ColorG = (a.ColorG + b.ColorG) * 0.5,
+                ColorB = (a.ColorB + b.ColorB) * 0.5
             };
-            return c;
         }
 
         public void Mutate(double rate, double strength)
         {
-            if (R.NextDouble() < rate) Size = Math.Clamp(Size + Rn(strength), 0.2, 2.5);
+            if (R.NextDouble() < rate) Size = Math.Clamp(Size + Rn(strength), 0.25, 2.5);
             if (R.NextDouble() < rate) Speed = Math.Clamp(Speed + Rn(strength * 20), 30, 200);
-            if (R.NextDouble() < rate) VisionRange = Math.Clamp(VisionRange + Rn(strength * 30), 50, 400);
+            if (R.NextDouble() < rate) VisionRange = Math.Clamp(VisionRange + Rn(strength * 30), 60, 400);
             if (R.NextDouble() < rate) Aggression = Math.Clamp(Aggression + Rn(strength), 0, 1);
             if (R.NextDouble() < rate) AttackPower = Math.Clamp(AttackPower + Rn(strength), 0, 1);
             if (R.NextDouble() < rate) Fear = Math.Clamp(Fear + Rn(strength), 0, 1);
@@ -84,6 +83,6 @@ namespace NeuroCivilization.Core
             if (R.NextDouble() < rate) ColorB = Math.Clamp(ColorB + Rn(strength * 0.2), 0, 1);
         }
 
-        static double Rn(double s) => (R.NextDouble() - 0.5) * 2 * s;
+        private static double Rn(double s) => (R.NextDouble() - 0.5) * 2.0 * s;
     }
 }

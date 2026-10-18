@@ -1,0 +1,17 @@
+# Build outputs
+bin/
+obj/
+
+# Visual Studio / Rider caches
+.vs/
+.idea/
+*.user
+*.suo
+
+# Simulation runtime artifacts
+Saves/
+autosave.json
+
+# OS junk
+Thumbs.db
+.DS_Store

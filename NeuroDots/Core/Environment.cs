@@ -27,7 +27,85 @@ namespace NeuroCivilization.Core
         double weatherChangeTimer;
         Random rng;
 
-        public Environment(Random random = null)
+        // ── Rivers & lakes: coarse water mask generated once per world ──
+        const int RCell = 26;
+        int _rCols, _rRows;
+        bool[] _riverMask = Array.Empty<bool>();
+
+        /// <summary>Winding random-walk rivers edge-to-edge + a few lakes stamped into a coarse static mask.</summary>
+        public void GenerateRivers(double ww, double wh, Random random)
+        {
+            _rCols = (int)(ww / RCell) + 1;
+            _rRows = (int)(wh / RCell) + 1;
+            _riverMask = new bool[_rCols * _rRows];
+
+            int rivers = 2 + random.Next(2);
+            for (int r = 0; r < rivers; r++)
+            {
+                bool vertical = random.Next(2) == 0;
+                // Start on a random edge, aim at the opposite edge
+                double sx = 0.15 + random.NextDouble() * 0.7;
+                float x, y, vx, vy;
+                if (vertical)
+                {
+                    x = (float)(sx * ww); y = random.Next(2) == 0 ? 4f : (float)wh - 4f;
+                    vy = y < wh / 2 ? 1f : -1f; vx = (float)(random.NextDouble() - 0.5);
+                }
+                else
+                {
+                    x = random.Next(2) == 0 ? 4f : (float)ww - 4f; y = (float)(sx * wh);
+                    vx = x < ww / 2 ? 1f : -1f; vy = (float)(random.NextDouble() - 0.5);
+                }
+
+                int steps = (int)(Math.Max(ww, wh) / RCell) + 8;
+                for (int s = 0; s < steps && x > -60 && y > -60 && x < ww + 60 && y < wh + 60; s++)
+                {
+                    StampWater(x, y, 0);
+                    // Wander but keep flowing to the opposite edge
+                    if (random.Next(5) == 0) { vx += (float)((random.NextDouble() - 0.5) * 0.7); vy += (float)((random.NextDouble() - 0.5) * 0.7); }
+                    float len = Math.Max(0.4f, (float)Math.Sqrt(vx * vx + vy * vy));
+                    vx /= len; vy /= len;
+                    if (vertical) vy += (y < wh / 2 ? 0.10f : -0.10f); else vx += (x < ww / 2 ? 0.10f : -0.10f);
+                    x += vx * RCell * 0.7f; y += vy * RCell * 0.7f;
+                    if (x < 4) x = 4; if (x > ww - 4) x = (float)ww - 4;
+                    if (y < 4) y = 4; if (y > wh - 4) y = (float)wh - 4;
+                }
+            }
+
+            for (int l = 0; l < 2; l++)
+            {
+                double cx = ww * (0.2 + random.NextDouble() * 0.6), cy = wh * (0.2 + random.NextDouble() * 0.6), rad = 40 + random.Next(90);
+                for (int dy = -4; dy <= 4; dy++)
+                    for (int dx = -4; dx <= 4; dx++)
+                    {
+                        double q = (dx * dx + dy * dy) / 18.0 + (random.NextDouble() - 0.5) * 0.16;
+                        if (q < 1.0) StampWater(cx + dx * rad / 4f, cy + dy * rad / 4f, 1);
+                    }
+            }
+        }
+
+        void StampWater(double x, double y, int r)
+        {
+            int cx = (int)(x / RCell), cy = (int)(y / RCell);
+            for (int dy = -r; dy <= r; dy++)
+                for (int dx = -r; dx <= r; dx++)
+                {
+                    int tx = cx + dx, ty = cy + dy;
+                    if (tx < 0 || ty < 0 || tx >= _rCols || ty >= _rRows) continue;
+                    _riverMask[ty * _rCols + tx] = true;
+                }
+        }
+
+        /// <summary>True if the world point lies on a river/lake cell (biome override + movement slow-down).</summary>
+        public bool IsWater(double x, double y)
+        {
+            if (_riverMask.Length == 0) return false;
+            int cx = (int)(x / RCell), cy = (int)(y / RCell);
+            if (cx < 0 || cy < 0 || cx >= _rCols || cy >= _rRows) return false;
+            return _riverMask[cy * _rCols + cx];
+        }
+
+        public Environment(Random? random = null)
         {
             rng = random ?? new Random();
             TimeOfDay = 8;
@@ -132,11 +210,10 @@ namespace NeuroCivilization.Core
             if (IsDrought || IsFlood) DisasterTimer = 0;
         }
 
-        /// <summary>
-        /// FIX: Биомы СТАТИЧНЫЕ — зависят ТОЛЬКО от позиции, НЕ от погоды
-        /// </summary>
+        /// <summary>FIX: Биомы СТАТИЧНЫЕ — зависят ТОЛЬКО от позиции, НЕ от погоды</summary>
         public Biome GetBiome(double x, double y, double ww, double wh)
         {
+            if (IsWater(x, y)) return Biome.River;
             double nx = x / ww;
             double ny = y / wh;
 

@@ -1,0 +1,4 @@
+CC0 / Public Domain (Creative Commons Zero).
+"Man Sprite 16x16" by dutzy — derivative of "running platform guy" by russpuppy.
+Source: https://opengameart.org/content/man-sprite-16x16
+No attribution required. Sheet layout: row0 walk x4, row1 run x4, row2 work x4, row3 idle/blink.

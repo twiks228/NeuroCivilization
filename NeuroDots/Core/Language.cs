@@ -1,134 +1,130 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 
 namespace NeuroCivilization.Core
 {
     /// <summary>
     /// Система протоязыка — слова возникают и эволюционируют,
-    /// значения закрепляются через социальное взаимодействие
+    /// значения закрепляются через социальное взаимодействие.
+    /// Оптимизирована без аллокаций в критических методах.
     /// </summary>
     public class LanguageSystem
     {
-        // Словарь: код слова → значение
         public Dictionary<int, WordMeaning> Dictionary = new();
+        private readonly List<int> _toRemove = new(32);
 
-        // Следующий свободный код
-        int nextWordCode = 1;
+        private int _nextWordCode = 1;
 
-        // Статистика
         public int TotalWordsCreated;
         public int ActiveWords => Dictionary.Count;
         public int ExtinctWords;
 
-        static Random R = new();
+        private static Random R => Random.Shared;
 
-        // ====== ЗНАЧЕНИЯ СЛОВ ======
+        private static readonly string[] Syllables =
+        {
+            "ak", "ba", "da", "el", "fa", "go", "ha", "ik", "ja", "ka",
+            "lu", "ma", "ni", "or", "pa", "ra", "sa", "tu", "ul", "va", "ze"
+        };
 
-        /// <summary>
-        /// Создать новое слово для концепции
-        /// </summary>
         public int CreateWord(Concept concept, int creatorId)
         {
-            int code = nextWordCode++;
+            int code = _nextWordCode++;
+            string phonetic = Syllables[R.Next(Syllables.Length)] +
+                              (R.NextDouble() < 0.65 ? Syllables[R.Next(Syllables.Length)] : "");
             Dictionary[code] = new WordMeaning
             {
                 Code = code,
+                Phonetic = phonetic,
                 PrimaryConcept = concept,
                 CreatorId = creatorId,
-                Strength = 0.3,
+                Strength = 0.35,
                 Age = 0,
+                UsageCount = 1,
                 Users = new HashSet<int> { creatorId }
             };
             TotalWordsCreated++;
             return code;
         }
 
-        /// <summary>
-        /// Человек использует слово рядом с другими → они учат его
-        /// </summary>
-        public void UseWord(int wordCode, int speakerId, List<int> listenerIds,
-                            double speakerSkill)
+        public void UseWord(int wordCode, int speakerId, List<int> listenerIds, double speakerSkill)
         {
-            if (!Dictionary.ContainsKey(wordCode)) return;
+            if (!Dictionary.TryGetValue(wordCode, out var word)) return;
 
-            var word = Dictionary[wordCode];
             word.UsageCount++;
-            word.Strength = Math.Min(1, word.Strength + 0.01);
+            word.Strength = Math.Min(1.0, word.Strength + 0.015);
             word.Users.Add(speakerId);
 
-            // Слушатели учат слово с вероятностью
-            foreach (var id in listenerIds)
+            if (listenerIds != null)
             {
-                double learnChance = speakerSkill * 0.3;
-                if (R.NextDouble() < learnChance)
-                    word.Users.Add(id);
+                for (int i = 0; i < listenerIds.Count; i++)
+                {
+                    if (R.NextDouble() < speakerSkill * 0.3)
+                        word.Users.Add(listenerIds[i]);
+                }
             }
         }
 
-        /// <summary>
-        /// Попытка коммуникации — говорящий пытается передать концепцию
-        /// </summary>
-        public CommunicationResult Communicate(Human speaker, Human listener,
-            Concept concept)
+        public CommunicationResult Communicate(Human speaker, Human listener, Concept concept)
         {
-            if (speaker == null || listener == null) return new CommunicationResult();
+            if (speaker == null || listener == null) return default;
 
-            // Найти слово для концепции в словаре говорящего
             int wordCode = -1;
-            foreach (var kvp in Dictionary)
+            for (int i = 0; i < speaker.KnownWords.Count; i++)
             {
-                if (kvp.Value.PrimaryConcept == concept &&
-                    speaker.KnownWords.Contains(kvp.Key))
+                int wc = speaker.KnownWords[i];
+                if (Dictionary.TryGetValue(wc, out var wm) && wm.PrimaryConcept == concept)
                 {
-                    wordCode = kvp.Key;
+                    wordCode = wc;
                     break;
                 }
             }
 
-            // Если слова нет — попытка создать новое
             if (wordCode == -1)
             {
-                double createChance = speaker.Genes.EffCreativity *
-                                      speaker.SkillSpeaking * 0.1;
+                double createChance = Math.Max(0.04, speaker.Genes.EffCreativity * (0.3 + speaker.SkillSpeaking) * 0.25);
                 if (R.NextDouble() < createChance)
                 {
                     wordCode = CreateWord(concept, speaker.Id);
-                    speaker.KnownWords.Add(wordCode);
-                    speaker.SkillSpeaking = Math.Min(1, speaker.SkillSpeaking + 0.005);
+                    speaker.LearnWord(wordCode);
+                    speaker.SkillSpeaking = Math.Min(1.0, speaker.SkillSpeaking + 0.008);
                 }
                 else
                 {
-                    return new CommunicationResult { Success = false, Gesture = true };
+                    return new CommunicationResult { Success = false, Gesture = true, Concept = concept };
                 }
             }
 
-            // Передача слова
+            if (!Dictionary.TryGetValue(wordCode, out var word))
+                return new CommunicationResult { Success = false, Gesture = true, Concept = concept };
+
+            word.UsageCount++;
+            word.Strength = Math.Min(1.0, word.Strength + 0.02);
+
             bool understood = false;
-            if (listener.KnownWords.Contains(wordCode))
+            if (listener.KnowsWord(wordCode))
             {
-                // Слушатель знает это слово
                 understood = true;
             }
             else
             {
-                // Попытка понять по контексту
-                double understandChance = listener.Genes.LearningSpeed *
-                                          speaker.SkillSpeaking * 0.2;
+                double understandChance = Math.Clamp(
+                    listener.Genes.LearningSpeed * (0.35 + speaker.SkillSpeaking) * 0.45, 0.08, 0.85);
                 if (R.NextDouble() < understandChance)
                 {
-                    listener.KnownWords.Add(wordCode);
-                    Dictionary[wordCode].Users.Add(listener.Id);
+                    listener.LearnWord(wordCode);
+                    word.Users.Add(listener.Id);
                     understood = true;
                 }
             }
 
             if (understood)
             {
-                speaker.Brain.Social(0.1);
-                listener.Brain.Social(0.1);
-                speaker.SkillSpeaking = Math.Min(1, speaker.SkillSpeaking + 0.002);
+                speaker.Brain.Social(0.12);
+                listener.Brain.Social(0.12);
+                speaker.SkillSpeaking = Math.Min(1.0, speaker.SkillSpeaking + 0.003);
+                listener.SkillSpeaking = Math.Min(1.0, listener.SkillSpeaking + 0.002);
             }
 
             return new CommunicationResult
@@ -139,58 +135,63 @@ namespace NeuroCivilization.Core
             };
         }
 
-        /// <summary>
-        /// Обновление системы — забытые слова удаляются
-        /// </summary>
         public void Update(double dt)
         {
-            var toRemove = new List<int>();
+            _toRemove.Clear();
 
             foreach (var kvp in Dictionary)
             {
-                kvp.Value.Age += dt;
+                var w = kvp.Value;
+                w.Age += dt;
 
-                // Слова без пользователей умирают
-                if (kvp.Value.Users.Count == 0 && kvp.Value.Age > 100)
-                    toRemove.Add(kvp.Key);
+                if (w.Users.Count == 0 && w.Age > 150)
+                {
+                    _toRemove.Add(kvp.Key);
+                    continue;
+                }
 
-                // Старые неиспользуемые слова тоже
-                if (kvp.Value.UsageCount < 3 && kvp.Value.Age > 200)
-                    toRemove.Add(kvp.Key);
+                if (w.UsageCount < 2 && w.Age > 300)
+                {
+                    _toRemove.Add(kvp.Key);
+                    continue;
+                }
 
-                // Сила слова затухает без использования
-                kvp.Value.Strength = Math.Max(0, kvp.Value.Strength - dt * 0.0001);
+                w.Strength = Math.Max(0.0, w.Strength - dt * 0.00005);
             }
 
-            foreach (var id in toRemove)
+            for (int i = 0; i < _toRemove.Count; i++)
             {
-                Dictionary.Remove(id);
+                Dictionary.Remove(_toRemove[i]);
                 ExtinctWords++;
             }
         }
 
-        /// <summary>
-        /// Получить все слова, которые знает данный человек
-        /// </summary>
         public List<(int Code, Concept Meaning)> GetKnownWords(Human human)
         {
-            var result = new List<(int, Concept)>();
-            foreach (var wc in human.KnownWords)
-                if (Dictionary.ContainsKey(wc))
-                    result.Add((wc, Dictionary[wc].PrimaryConcept));
+            var result = new List<(int, Concept)>(human.KnownWords.Count);
+            for (int i = 0; i < human.KnownWords.Count; i++)
+            {
+                int wc = human.KnownWords[i];
+                if (Dictionary.TryGetValue(wc, out var wm))
+                    result.Add((wc, wm.PrimaryConcept));
+            }
             return result;
         }
 
-        /// <summary>
-        /// Языковая сложность племени
-        /// </summary>
         public double TribalLanguageComplexity(List<int> memberIds)
         {
+            if (memberIds == null || memberIds.Count == 0) return 0;
             int sharedWords = 0;
+            int half = memberIds.Count / 2;
             foreach (var kvp in Dictionary)
             {
-                int knowing = memberIds.Count(id => kvp.Value.Users.Contains(id));
-                if (knowing > memberIds.Count / 2) sharedWords++;
+                int knowing = 0;
+                var users = kvp.Value.Users;
+                for (int i = 0; i < memberIds.Count; i++)
+                {
+                    if (users.Contains(memberIds[i])) knowing++;
+                }
+                if (knowing > half) sharedWords++;
             }
             return sharedWords;
         }
@@ -199,52 +200,33 @@ namespace NeuroCivilization.Core
     public class WordMeaning
     {
         public int Code;
+        public string Phonetic = "";
         public Concept PrimaryConcept;
         public int CreatorId;
-        public double Strength;      // Насколько закреплено слово
+        public double Strength;
         public double Age;
         public int UsageCount;
-        public HashSet<int> Users;   // Кто знает это слово
+        public HashSet<int> Users = new();
     }
 
-    /// <summary>
-    /// Базовые концепции для прото-языка
-    /// </summary>
     public enum Concept
     {
-        // Объекты
         Food, Water, Fire, Shelter, Tool, Weapon, Animal, Human,
-
-        // Действия
         Go, Come, Eat, Drink, Sleep, Attack, Flee, Build, Give, Take,
-
-        // Направления
         Here, There, Up, Down, Left, Right,
-
-        // Опасности
         Danger, Predator, Storm, Cold, Hot,
-
-        // Социальное
         Friend, Enemy, Leader, Child, Help, Together,
-
-        // Эмоции
         Happy, Sad, Angry, Scared, Hungry, Tired,
-
-        // Время
         Now, Before, After, Day, Night,
-
-        // Количество
         One, Many, None, Big, Small,
-
-        // Природа
         Tree, River, Mountain, Cave, Grass
     }
 
-    public class CommunicationResult
+    public struct CommunicationResult
     {
         public bool Success;
         public int WordCode;
         public Concept Concept;
-        public bool Gesture; // Был жест вместо слова
+        public bool Gesture;
     }
 }

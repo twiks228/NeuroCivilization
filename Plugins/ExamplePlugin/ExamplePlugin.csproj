@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <!-- Point to the game assembly; adjust the path if you move this folder. -->
+  <ItemGroup>
+    <Reference Include="NeuroCivilization">
+      <HintPath>..\..\NeuroDots\bin\Release\net8.0-windows\NeuroCivilization.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
