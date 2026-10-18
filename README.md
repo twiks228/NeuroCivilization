@@ -6,9 +6,12 @@
 **NeuroCivilization** is a complex zero-player Artificial Life simulation written in C#. It simulates a living, breathing ecosystem where AI agents (Humans and Animals) survive, evolve, and form primitive societies using custom Neural Networks and Genetic Algorithms.
 
 ## 📸 Screenshots
-<img width="1914" height="1020" alt="{603EE807-9F6A-4102-92C0-C8D77B7C77F6}" src="https://github.com/user-attachments/assets/9c026d4c-ac96-47ce-ba06-9a76615afd6a" />
-<img width="1916" height="1017" alt="{C7C3B1F9-4E36-492A-A561-2B54CF868002}" src="https://github.com/user-attachments/assets/57543f6d-1779-4a9e-a0f9-43b88584e786" />
-<img width="1912" height="991" alt="{A291E7F9-6F13-4D34-B411-E314E57C8DEE}" src="https://github.com/user-attachments/assets/5c0898c6-6e8d-4def-8224-684884f33b5a" />
+
+<img width="1920" height="988" alt="{06EFCAB1-0195-4737-942A-752739EF147F}" src="https://github.com/user-attachments/assets/7e3d0a84-9c97-4556-b8d9-3e1125271fdc" />
+<img width="1920" height="973" alt="{678E2996-9BA8-4547-B5D1-753C701C1D0D}" src="https://github.com/user-attachments/assets/c8a98ff9-f659-4408-b31c-043e50541a98" />
+<img width="1920" height="984" alt="{B05834ED-0728-45FC-A09D-695462097F30}" src="https://github.com/user-attachments/assets/08bff643-d866-4529-b5c1-51c10a5d3ee1" />
+<img width="1920" height="990" alt="{97B3E488-16B1-45AD-B8C6-5F2A5EC17F0D}" src="https://github.com/user-attachments/assets/b9e04ae7-3536-4832-846d-3dd92db0a261" />
+
 
 
 ## 🆕 What's New in This Build
